@@ -444,82 +444,118 @@ CImageDouble CImageDouble::filtrage(const std::string& methode, int N, double si
 					out.ecrireMax(out(i - nbBords, j - nbBords));
 			}
 	}
-	else
-		if (methode.compare("gaussien") == 0)
+	else if (methode.compare("gaussien") == 0)
+	{
+		out.m_sNom = this->lireNom() + "FGa";
+		// définition du noyau
+		double noyau[50]; // taille maxi pour optimisation 
+
+		double somme = 0; // normalisation
+		for (int i = 0; i < N; i++)
 		{
-			out.m_sNom = this->lireNom() + "FGa";
-			// définition du noyau
-			double noyau[50]; // taille maxi pour optimisation 
-
-			double somme = 0; // normalisation
-			for (int i = 0; i < N; i++)
-			{
-				noyau[i] = exp(-((i - N / 2)*(i - N / 2)) / (2 * sigma*sigma));
-				somme += noyau[i];
-			}
-
-			// filtrage
-			int nbBords = N / 2;
-
-			CImageDouble agrandie(this->lireHauteur() + nbBords * 2, this->lireLargeur() + nbBords * 2);
-
-			// gestion du coeur
-			for (int i = 0; i < this->lireHauteur(); i++)
-				for (int j = 0; j < this->lireLargeur(); j++) {
-					agrandie(i + nbBords, j + nbBords) = this->operator()(i, j);
-				}
-
-			// gestion des bords
-			for (int pix = 0; pix < agrandie.lireLargeur(); pix++) {
-				for (int t = nbBords - 1; t >= 0; t--)
-					agrandie(t, pix) = agrandie(nbBords, pix);
-				for (int t = agrandie.lireHauteur() - 1; t >= agrandie.lireHauteur() - 1 - nbBords; t--)
-					agrandie(t, pix) = agrandie(agrandie.lireHauteur() - 1 - nbBords, pix);
-			}
-			for (int pix = 0; pix < agrandie.lireHauteur(); pix++) {
-				for (int t = nbBords - 1; t >= 0; t--)
-					agrandie(pix, t) = agrandie(pix, nbBords);
-				for (int t = agrandie.lireLargeur() - 1; t >= agrandie.lireLargeur() - 1 - nbBords; t--)
-					agrandie(pix, t) = agrandie(pix, agrandie.lireLargeur() - 1 - nbBords);
-			}
-
-			CImageDouble agrandie2 = agrandie;
-
-			// colonnes
-			for (int i = nbBords; i < agrandie.lireHauteur() - nbBords; i++)
-				for (int j = nbBords; j < agrandie.lireLargeur() - nbBords; j++) {
-					double somme = 0;
-					double moy = 0;
-
-					for (int k = -nbBords; k <= nbBords; k++) {
-						moy += (double)agrandie(i - k, j)*noyau[k + nbBords];
-						somme += noyau[k + nbBords];
-					}
-					agrandie2(i, j) = moy / somme;
-				}
-			// lignes
-			for (int i = nbBords; i < agrandie.lireHauteur() - nbBords; i++)
-				for (int j = nbBords; j < agrandie.lireLargeur() - nbBords; j++) {
-					double somme = 0;
-					double moy = 0;
-
-					for (int l = -nbBords; l <= nbBords; l++) {
-						moy += (double)agrandie2(i, j - l)*noyau[l + nbBords];
-						somme += noyau[l + nbBords];
-					}
-					agrandie(i, j) = (moy / somme);
-				}
-			// image out
-			for (int i = nbBords; i < agrandie.lireHauteur() - nbBords; i++)
-				for (int j = nbBords; j < agrandie.lireLargeur() - nbBords; j++)
-				{
-					out(i - nbBords, j - nbBords) = agrandie(i, j);
-					if (out(i - nbBords, j - nbBords) < out.lireMin())
-						out.ecrireMin(out(i - nbBords, j - nbBords));
-					if (out(i - nbBords, j - nbBords) > out.lireMax())
-						out.ecrireMax(out(i - nbBords, j - nbBords));
-				}
+			noyau[i] = exp(-((i - N / 2)*(i - N / 2)) / (2 * sigma*sigma));
+			somme += noyau[i];
 		}
+
+		// filtrage
+		int nbBords = N / 2;
+
+		CImageDouble agrandie(this->lireHauteur() + nbBords * 2, this->lireLargeur() + nbBords * 2);
+
+		// gestion du coeur
+		for (int i = 0; i < this->lireHauteur(); i++)
+			for (int j = 0; j < this->lireLargeur(); j++) {
+				agrandie(i + nbBords, j + nbBords) = this->operator()(i, j);
+			}
+
+		// gestion des bords
+		for (int pix = 0; pix < agrandie.lireLargeur(); pix++) {
+			for (int t = nbBords - 1; t >= 0; t--)
+				agrandie(t, pix) = agrandie(nbBords, pix);
+			for (int t = agrandie.lireHauteur() - 1; t >= agrandie.lireHauteur() - 1 - nbBords; t--)
+				agrandie(t, pix) = agrandie(agrandie.lireHauteur() - 1 - nbBords, pix);
+		}
+		for (int pix = 0; pix < agrandie.lireHauteur(); pix++) {
+			for (int t = nbBords - 1; t >= 0; t--)
+				agrandie(pix, t) = agrandie(pix, nbBords);
+			for (int t = agrandie.lireLargeur() - 1; t >= agrandie.lireLargeur() - 1 - nbBords; t--)
+				agrandie(pix, t) = agrandie(pix, agrandie.lireLargeur() - 1 - nbBords);
+		}
+
+		CImageDouble agrandie2 = agrandie;
+
+		// colonnes
+		for (int i = nbBords; i < agrandie.lireHauteur() - nbBords; i++)
+			for (int j = nbBords; j < agrandie.lireLargeur() - nbBords; j++) {
+				double somme = 0;
+				double moy = 0;
+
+				for (int k = -nbBords; k <= nbBords; k++) {
+					moy += (double)agrandie(i - k, j)*noyau[k + nbBords];
+					somme += noyau[k + nbBords];
+				}
+				agrandie2(i, j) = moy / somme;
+			}
+		// lignes
+		for (int i = nbBords; i < agrandie.lireHauteur() - nbBords; i++)
+			for (int j = nbBords; j < agrandie.lireLargeur() - nbBords; j++) {
+				double somme = 0;
+				double moy = 0;
+
+				for (int l = -nbBords; l <= nbBords; l++) {
+					moy += (double)agrandie2(i, j - l)*noyau[l + nbBords];
+					somme += noyau[l + nbBords];
+				}
+				agrandie(i, j) = (moy / somme);
+			}
+		// image out
+		for (int i = nbBords; i < agrandie.lireHauteur() - nbBords; i++)
+			for (int j = nbBords; j < agrandie.lireLargeur() - nbBords; j++)
+			{
+				out(i - nbBords, j - nbBords) = agrandie(i, j);
+				if (out(i - nbBords, j - nbBords) < out.lireMin())
+					out.ecrireMin(out(i - nbBords, j - nbBords));
+				if (out(i - nbBords, j - nbBords) > out.lireMax())
+					out.ecrireMax(out(i - nbBords, j - nbBords));
+			}
+	}
+	else if (methode.compare("median") == 0)
+	{
+		// Algorithme de flou médian ajouté à la bibliothèque dans le cadre du projet PuzzleOuiOui
+		// Algorithme très naïf et non optimisé.
+
+		// Lire sur toute l'image
+		for (int j = 0; j < m_iHauteur; j++)
+		{
+			for (int i = 0; i < m_iLargeur; i++)
+			{
+				int min_y = 0 > (j - N) ? 0 : (j - N);
+				int min_x = 0 > (i - N) ? 0 : (i - N);
+				int max_y = (j + N) < m_iHauteur ? (j + N) : (m_iHauteur);
+				int max_x = (i + N) < m_iLargeur ? (i + N) : (m_iLargeur);
+
+				// Etude du kernel side*side
+				std::vector<int> voisinnage;			
+				for (int jKernel = min_y; jKernel < max_y; jKernel++)
+				{
+					for (int iKernel = min_x; iKernel < max_x; iKernel++)
+					{
+						int value = this->operator()(jKernel, iKernel);
+						//std::cout << "value : " << value << std::endl;
+						voisinnage.emplace_back(value);
+					}
+				}
+
+				int posMedian = voisinnage.size() / 2;
+				std::sort(voisinnage.begin(), voisinnage.end());
+				int valMedian = voisinnage.at(posMedian);
+
+				out(j, i) = valMedian;
+			}
+		}
+	}
+
+	// out.toNdg().sauvegarde("blurred_ouptut");
 
 	return out;
 }

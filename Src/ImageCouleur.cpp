@@ -47,8 +47,8 @@ CImageCouleur::CImageCouleur() {
 	this->m_ppucPixel = NULL;
 }
 
-CImageCouleur::CImageCouleur(int hauteur, int largeur, int valR, int valV, int valB) {
-
+CImageCouleur::CImageCouleur(int hauteur, int largeur, int valR, int valV, int valB) 
+{
 	this->m_iHauteur = hauteur;
 	this->m_iLargeur = largeur;
 	this->m_sNom     = "inconnu";
@@ -255,6 +255,36 @@ CImageCouleur::CImageCouleur(const CImageNdg& im, const CImageNdg& mask, int R, 
 	}
 }
 
+CImageCouleur::CImageCouleur(int hauteur, int largeur, const std::vector<S_RGB>& data)
+{
+	// Si la taille de l'image annoncée est cohérente avec les données
+	if (hauteur * largeur == data.size())
+	{
+		m_iHauteur = hauteur;
+		m_iLargeur = largeur;
+		m_sNom = "inconnu";
+
+		this->m_pucData = new unsigned char[hauteur * largeur * 3];
+		this->m_ppucPixel = new unsigned char*[hauteur * largeur];
+
+		for (int i = 0; i < hauteur * largeur; i++)
+		{
+			this->m_ppucPixel[i] = &this->m_pucData[3 * i];
+		}
+
+		for (int i = 0; i < data.size(); i++)
+		{
+			this->m_ppucPixel[i][0] = data.at(i).valueR;
+			this->m_ppucPixel[i][1] = data.at(i).valueG;
+			this->m_ppucPixel[i][2] = data.at(i).valueB;
+		}
+	}
+	else
+	{
+		std::cout << "Création image annulée, les arguments de tailles et la taille des données sont incohérents" << std::endl;
+	}
+}
+
 CImageCouleur::~CImageCouleur() {
 
 	if (this->m_ppucPixel) {
@@ -388,6 +418,39 @@ std::vector<unsigned long> CImageCouleur::histogramme(bool enregistrementCSV) {
 	}
 
 	return h;
+}
+
+CTableau3D<double> CImageCouleur::histogrammeCouleur(int nb_bin) const
+{
+	int nb_pixel = m_iLargeur * m_iHauteur;
+	int size_bin = (255 / nb_bin) + 1;
+
+	CTableau3D<double> histoCouleur(nb_bin, nb_bin, nb_bin, 0);
+	ST_COULEUR_RGB currRGB;
+
+	for (int i = 0; i < nb_pixel; i++)
+	{
+		currRGB.valueR = this->operator()(i)[0] / size_bin;
+		currRGB.valueG = this->operator()(i)[1] / size_bin;
+		currRGB.valueB = this->operator()(i)[2] / size_bin;
+
+		histoCouleur.at(currRGB.valueR, currRGB.valueG, currRGB.valueB) += 1.0;
+	}
+
+	// Normalisation par le nombre de points total
+	// Pour enlever l'enlever commenter les 3 boucles suivantes.
+	for (int iRed = 0; iRed < nb_bin; iRed++)
+	{
+		for (int iGreen = 0; iGreen < nb_bin; iGreen++)
+		{
+			for (int iBlue = 0; iBlue < nb_bin; iBlue++)
+			{
+				histoCouleur.at(iRed, iGreen, iBlue) /= nb_pixel;
+			}
+		}
+	}
+
+	return histoCouleur;
 }
 
 // gestion des plans
