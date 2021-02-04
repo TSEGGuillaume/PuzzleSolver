@@ -12,11 +12,17 @@
 #include <algorithm>
 
 #include "ImageNdg.h"
+#include "Tableau3D.h"
 
 #define MIN3(x,y,z)  ((y) <= (z) ? ((x) <= (y) ? (x) : (y)) : ((x) <= (z) ? (x) : (z)))
 #define MAX3(x,y,z)  ((y) >= (z) ? ((x) >= (y) ? (x) : (y)) : ((x) >= (z) ? (x) : (z)))
 
-class CImageOpenCV;
+typedef struct ST_COULEUR_RGB
+{
+	unsigned char valueR;
+	unsigned char valueG;
+	unsigned char valueB;
+} S_RGB;
 
 class CImageCouleur 
 {
@@ -42,8 +48,7 @@ public:
 	_declspec(dllexport) CImageCouleur(const CImageNdg& im);
 	_declspec(dllexport) CImageCouleur(const CImageNdg& pR, const CImageNdg& pG, const CImageNdg& pB);
 	_declspec(dllexport) CImageCouleur(const CImageNdg& im, const CImageNdg& mask, int R = 255, int G = 0, int B = 0); // img mask binaire de préférence contours
-
-	_declspec(dllexport) CImageCouleur(const CImageOpenCV& myMat, bool bgr2rgb = false); // Constructeur pour convertir une CImageOpenCV (dérivée de cv::Mat) vers CImageCouleur
+	_declspec(dllexport) CImageCouleur(int hauteur, int largeur, const std::vector<S_RGB> & data); // img mask binaire de préférence contours
 
 	_declspec(dllexport) ~CImageCouleur(); // destructeur
 
@@ -96,7 +101,9 @@ public:
 		
 
 	// histogramme = 3 x plans 
-	_declspec(dllexport) std::vector<unsigned long> histogramme(bool enregistrementCSV = false); 
+	_declspec(dllexport) std::vector<unsigned long> histogramme(bool enregistrementCSV = false);
+	// 3D Color histogramm
+	_declspec(dllexport) CTableau3D<double> histogrammeCouleur(int nb_bin) const;
 
 	// gestion des plans
 	_declspec(dllexport) CImageNdg plan(int choix = 3, double poidsRouge = 1. / 3., double poidsVert = 1. / 3., double poidsBleu = 1. / 3.); // 0 -> R ou H, 1 -> V ou S, 2 -> B ou V et 4 -> luminance d'où les poids fct de l'illuminant
