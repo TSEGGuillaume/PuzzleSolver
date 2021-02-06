@@ -16,6 +16,11 @@ public:
 	T& at(int x, int y, int z);
 
 	T at(int x, int y, int z) const;
+
+	// Accesseur
+	inline size_t getHauteur() const { return m_sizeHauteur; };
+	inline size_t getLargeur() const { return data.size() / (m_sizeHauteur * m_sizeProfondeur); };
+	inline size_t getProfondeur() const { return m_sizeProfondeur; };
 };
 
 template<typename T>

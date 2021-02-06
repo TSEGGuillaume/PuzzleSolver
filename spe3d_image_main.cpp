@@ -48,23 +48,64 @@
 //	return listeNom;
 //}
 
-//CImageNdg filtreMedianHisto(CImageNdg src, int rayon)
-//{
-//
-//}
+extern "C"
+{
+	_declspec(dllexport) CPuzzleSolveur * createPuzzleSolveur(char * pDirPiecesInde, char * pPathPuzzle)
+	{
+		CPuzzleSolveur * myPuzzleSolveur = new CPuzzleSolveur();
+		std::string dirPiecesInde(pDirPiecesInde);
+		std::string pathPuzzle(pPathPuzzle);
+
+		myPuzzleSolveur->pretraitementPiecesIndependantes(dirPiecesInde);
+		myPuzzleSolveur->pretraitementPuzzleComplet(pathPuzzle);
+
+		myPuzzleSolveur->recherchePositionPiecesDansPuzzle();
+
+		return myPuzzleSolveur;
+	}
+}
+
+extern "C"
+{
+	_declspec(dllexport) int get_X1(CPuzzleSolveur * solver, char * imagette)
+	{
+		std::string myPieceName(imagette);
+		solver->getROIFromPieceName(myPieceName).first.x;
+	}
+}
+
+extern "C"
+{
+	_declspec(dllexport) int get_Y1(CPuzzleSolveur * solver, char * imagette)
+	{
+		std::string myPieceName(imagette);
+		solver->getROIFromPieceName(myPieceName).first.y;
+	}
+}
+
+extern "C"
+{
+	_declspec(dllexport) int get_X2(CPuzzleSolveur * solver, char * imagette)
+	{
+		std::string myPieceName(imagette);
+		solver->getROIFromPieceName(myPieceName).second.x;
+	}
+}
+
+extern "C"
+{
+	_declspec(dllexport) int get_Y2(CPuzzleSolveur * solver, char * imagette)
+	{
+		std::string myPieceName(imagette);
+		solver->getROIFromPieceName(myPieceName).second.y;
+	}
+}
 
 
 void main()
 {
 	std::string dirPiecesInde = "..\\Images\\pieces";
 	std::string pathPuzzleComplet = "..\\Images\\PuzzleCompletBase.bmp";
-
-	// Filtre médian approche histo
-	CImageCouleur myOriginalImg("..\\Images\\pieces\\1.bmp");
-	CImageNdg myOriginalNdg = myOriginalImg.plan();
-
-	//CImageNdg res = filtreMedianHisto(myOriginalNdg, 10);
-
 
 	CPuzzleSolveur myPuzzleSolveur;
 

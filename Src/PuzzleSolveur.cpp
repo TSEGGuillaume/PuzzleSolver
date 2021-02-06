@@ -6,7 +6,6 @@
 #include <chrono>
 
 // Personnelles
-#include "ImageClasse.h"
 #include "ImageDouble.h"
 #include "ImageCouleur.h"
 #include "TransformeeHough.h"
@@ -114,12 +113,66 @@ void CPuzzleSolveur::pretraitementPuzzleComplet(std::string & puzzleCompletPath)
 	auto houghOut = myHoughT.dessineHoughResultat("carte");
 
 	CImageClasse piecesSeg(houghOut, "V4");
-	auto piecesDansPuzzle = piecesSeg.filtrage("taille", 70000, true).sigComposantesConnexes(true); // La surface d'une piece dans l'image > 70000 px
+	m_vPiecesHough = piecesSeg.filtrage("taille", 70000, true).sigComposantesConnexes(true); // La surface d'une piece dans l'image > 70000 px
 
 	houghOut.sauvegarde("HoughMap");
 
 	auto end = std::chrono::steady_clock::now();
 	std::cout << "Prétraitement des images des pièces terminé (" << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms)" << std::endl;
+}
+
+void CPuzzleSolveur::recherchePositionPiecesDansPuzzle()
+{
+	for (int i = 0; i < m_vPiecesImageName.size(); i++)
+	{
+		// TODO : 
+		// - Calcule la carte de proba pour la pièce courante et le Puzzle
+		// - Recherche point Baptiste
+
+		auto retourPtBaptiste = sPoint();
+
+		m_assocPieceROI.emplace(std::make_pair(m_vPiecesImageName.at(i), placePieceDansPuzzle(retourPtBaptiste)));
+	}
+}
+
+std::pair<sPoint, sPoint> CPuzzleSolveur::getROIFromPieceName(std::string pieceName)
+{
+	auto search = m_assocPieceROI.find(pieceName);
+	
+	if (search != m_assocPieceROI.end()) 
+	{
+		std::cout << "Piece trouvee : " << "(" << search->second.first.x << "," << search->second.first.y << ")" << "(" << search->second.second.x << "," << search->second.second.y << ")" << std::endl;
+	}
+	else {
+		std::cout << "Piece non trouvee" << std::endl;
+	}
+
+	return search->second;
+}
+
+std::pair<sPoint, sPoint> CPuzzleSolveur::placePieceDansPuzzle(sPoint pointMaxProba)
+{
+	std::pair<sPoint, sPoint> ROI;
+
+	for (int i = 0; i < m_vPiecesHough.size(); i++)
+	{
+		// Si le point de probabilité max est compris dans la pièce de Hough courante
+		if (pointMaxProba.x >= m_vPiecesHough.at(i).rectEnglob_Hi
+			&& pointMaxProba.x <= m_vPiecesHough.at(i).rectEnglob_Bi
+			&& pointMaxProba.y >= m_vPiecesHough.at(i).rectEnglob_Hj
+			&& pointMaxProba.y <= m_vPiecesHough.at(i).rectEnglob_Bj)
+		{
+			sPoint pt1ROI, pt2ROI;
+			pt1ROI.x = m_vPiecesHough.at(i).rectEnglob_Hi;
+			pt1ROI.y = m_vPiecesHough.at(i).rectEnglob_Hj;
+			pt2ROI.x = m_vPiecesHough.at(i).rectEnglob_Bi;
+			pt2ROI.y = m_vPiecesHough.at(i).rectEnglob_Bj;
+
+			ROI = std::make_pair(pt1ROI, pt2ROI);
+		}
+	}
+
+	return ROI;
 }
 
 std::vector<std::string> listeDirToTableau(std::string dirDB)
