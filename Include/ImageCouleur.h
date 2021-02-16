@@ -24,6 +24,13 @@ typedef struct ST_COULEUR_RGB
 	unsigned char valueB;
 } S_RGB;
 
+typedef struct ST_HISTOGRAMME_COULEUR
+{
+	int bin; // Les bin doivent être de mêmes dimensions dans les 3 directions
+	CTableau3D<double> histogramme;
+	std::vector<int> idx_histogramme;
+} S_HistoCouleur;
+
 class CImageCouleur 
 {
 	///////////////////////////////////////
@@ -103,7 +110,7 @@ public:
 	// histogramme = 3 x plans 
 	_declspec(dllexport) std::vector<unsigned long> histogramme(bool enregistrementCSV = false);
 	// 3D Color histogramm
-	_declspec(dllexport) CTableau3D<double> histogrammeCouleur(int nb_bin) const;
+	_declspec(dllexport) S_HistoCouleur histogrammeCouleur(int nb_bin) const;
 
 	// gestion des plans
 	_declspec(dllexport) CImageNdg plan(int choix = 3, double poidsRouge = 1. / 3., double poidsVert = 1. / 3., double poidsBleu = 1. / 3.); // 0 -> R ou H, 1 -> V ou S, 2 -> B ou V et 4 -> luminance d'où les poids fct de l'illuminant

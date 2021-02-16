@@ -13,9 +13,11 @@ public:
 	CTableau3D(size_t largeur, size_t hauteur, size_t profondeur);
 	CTableau3D(size_t largeur, size_t hauteur, size_t profondeur, T initValue);
 
-	T& at(int x, int y, int z);
-
+	T & at(int x, int y, int z);
 	T at(int x, int y, int z) const;
+
+	T & at(int idx);
+	T at(int x) const;
 
 	// Accesseur
 	inline size_t getHauteur() const { return m_sizeHauteur; };
@@ -52,4 +54,14 @@ inline T CTableau3D<T>::at(int x, int y, int z) const
 	return data[x * m_sizeHauteur * m_sizeProfondeur + y * m_sizeProfondeur + z];
 }
 
+template<typename T>
+inline T & CTableau3D<T>::at(int idx)
+{
+	return data[idx];
+}
 
+template<typename T>
+inline T CTableau3D<T>::at(int idx) const
+{
+	return data[idx];
+}

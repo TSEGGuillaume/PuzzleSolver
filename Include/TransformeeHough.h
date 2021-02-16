@@ -3,12 +3,7 @@
 #include <memory>
 
 #include "ImageNdg.h"
-
-typedef struct STRUCT_POINTS_2D
-{
-	int x = -1;
-	int	y = -1;
-} SPoint2d;
+#include "ImageGeneralTools.h"
 
 // Définition d'un espace de nom qui contiendra les outils de mesure de caractéristique
 namespace feature_measurement

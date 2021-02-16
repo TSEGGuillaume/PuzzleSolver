@@ -9,11 +9,10 @@
 #include "ImageDouble.h"
 #include "ImageCouleur.h"
 #include "TransformeeHough.h"
+#include "ImageObjectTracker.h"
 
 void CPuzzleSolveur::segmentePieceIndependante(std::vector<std::string> & fileImage2Process)
 {
-	int quantificationHisto = 16;
-
 	for (auto it = fileImage2Process.begin(); it != fileImage2Process.end(); it++)
 	{
 		std::vector<S_RGB> pixelsSegmentes;
@@ -44,7 +43,7 @@ void CPuzzleSolveur::segmentePieceIndependante(std::vector<std::string> & fileIm
 		CImageCouleur fausseImageObjet(1, pixelsSegmentes.size(), pixelsSegmentes);
 
 		m_mutexVecHisto.lock();
-		m_histosCouleurPiecesInde.push_back(fausseImageObjet.histogrammeCouleur(quantificationHisto));
+		m_histosCouleurPiecesInde.push_back(fausseImageObjet.histogrammeCouleur(m_cQuantificationHisto));
 		m_mutexVecHisto.unlock();
 	}
 }
@@ -97,7 +96,7 @@ void CPuzzleSolveur::pretraitementPuzzleComplet(std::string & puzzleCompletPath)
 
 	std::cout << "Lancement du prétraitement du puzzle : détection de bords (vec. gradient), détection des limites de pièces (Hough lin.) et histogramme couleur - possibilite de threading" << std::endl;
 
-	m_histoCouleurPuzzleComplet = imgPuzzleComplet.histogrammeCouleur(16);
+	m_histoCouleurPuzzleComplet = imgPuzzleComplet.histogrammeCouleur(m_cQuantificationHisto);
 
 	auto start = std::chrono::steady_clock::now();
 	// Partie recherche des pièces dans le puzzle
@@ -113,6 +112,7 @@ void CPuzzleSolveur::pretraitementPuzzleComplet(std::string & puzzleCompletPath)
 	auto houghOut = myHoughT.dessineHoughResultat("carte");
 
 	CImageClasse piecesSeg(houghOut, "V4");
+	piecesSeg.sauvegarde("testSave");
 	m_vPiecesHough = piecesSeg.filtrage("taille", 70000, true).sigComposantesConnexes(true); // La surface d'une piece dans l'image > 70000 px
 
 	houghOut.sauvegarde("HoughMap");
@@ -125,17 +125,14 @@ void CPuzzleSolveur::recherchePositionPiecesDansPuzzle()
 {
 	for (int i = 0; i < m_vPiecesImageName.size(); i++)
 	{
-		// TODO : 
-		// - Calcule la carte de proba pour la pièce courante et le Puzzle
-		// - Recherche point Baptiste
+		auto carteProbaObjDansImage = carteProbabilite(m_histoCouleurPuzzleComplet, m_histosCouleurPiecesInde.at(i)); // Calcule la carte de proba pour la pièce courante et le Puzzle
+		SPoint2d centreMax = detecteMaxCarteProba(carteProbaObjDansImage, 240, 310 /*TODO*/, 2214, 1596);
 
-		auto retourPtBaptiste = sPoint();
-
-		m_assocPieceROI.emplace(std::make_pair(m_vPiecesImageName.at(i), placePieceDansPuzzle(retourPtBaptiste)));
+		m_assocPieceROI.emplace(std::make_pair(m_vPiecesImageName.at(i), placePieceDansPuzzle(centreMax)));
 	}
 }
 
-std::pair<sPoint, sPoint> CPuzzleSolveur::getROIFromPieceName(std::string pieceName)
+std::pair<SPoint2d, SPoint2d> CPuzzleSolveur::getROIFromPieceName(std::string pieceName)
 {
 	auto search = m_assocPieceROI.find(pieceName);
 	
@@ -150,23 +147,26 @@ std::pair<sPoint, sPoint> CPuzzleSolveur::getROIFromPieceName(std::string pieceN
 	return search->second;
 }
 
-std::pair<sPoint, sPoint> CPuzzleSolveur::placePieceDansPuzzle(sPoint pointMaxProba)
+std::pair<SPoint2d, SPoint2d> CPuzzleSolveur::placePieceDansPuzzle(SPoint2d pointMaxProba)
 {
-	std::pair<sPoint, sPoint> ROI;
+	std::pair<SPoint2d, SPoint2d> ROI;
 
 	for (int i = 0; i < m_vPiecesHough.size(); i++)
 	{
 		// Si le point de probabilité max est compris dans la pièce de Hough courante
-		if (pointMaxProba.x >= m_vPiecesHough.at(i).rectEnglob_Hi
-			&& pointMaxProba.x <= m_vPiecesHough.at(i).rectEnglob_Bi
-			&& pointMaxProba.y >= m_vPiecesHough.at(i).rectEnglob_Hj
-			&& pointMaxProba.y <= m_vPiecesHough.at(i).rectEnglob_Bj)
+		// TODO : Peut-être que ce test ne suffiera pas. Dans ce cas, implémenter IoU
+		if (pointMaxProba.x >= m_vPiecesHough.at(i).rectEnglob_Hj
+			&& pointMaxProba.x <= m_vPiecesHough.at(i).rectEnglob_Bj
+			&& pointMaxProba.y >= m_vPiecesHough.at(i).rectEnglob_Hi
+			&& pointMaxProba.y <= m_vPiecesHough.at(i).rectEnglob_Bi)
 		{
-			sPoint pt1ROI, pt2ROI;
-			pt1ROI.x = m_vPiecesHough.at(i).rectEnglob_Hi;
-			pt1ROI.y = m_vPiecesHough.at(i).rectEnglob_Hj;
-			pt2ROI.x = m_vPiecesHough.at(i).rectEnglob_Bi;
-			pt2ROI.y = m_vPiecesHough.at(i).rectEnglob_Bj;
+			SPoint2d pt1ROI, pt2ROI;
+
+			// /!\ Inversion : pour le prof. i = y et j = x
+			pt1ROI.x = m_vPiecesHough.at(i).rectEnglob_Hj;
+			pt1ROI.y = m_vPiecesHough.at(i).rectEnglob_Hi;
+			pt2ROI.x = m_vPiecesHough.at(i).rectEnglob_Bj;
+			pt2ROI.y = m_vPiecesHough.at(i).rectEnglob_Bi;
 
 			ROI = std::make_pair(pt1ROI, pt2ROI);
 		}

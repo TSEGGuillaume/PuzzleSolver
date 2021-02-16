@@ -70,7 +70,7 @@ extern "C"
 	_declspec(dllexport) int get_X1(CPuzzleSolveur * solver, char * imagette)
 	{
 		std::string myPieceName(imagette);
-		solver->getROIFromPieceName(myPieceName).first.x;
+		return solver->getROIFromPieceName(myPieceName).first.x;
 	}
 }
 
@@ -79,7 +79,7 @@ extern "C"
 	_declspec(dllexport) int get_Y1(CPuzzleSolveur * solver, char * imagette)
 	{
 		std::string myPieceName(imagette);
-		solver->getROIFromPieceName(myPieceName).first.y;
+		return solver->getROIFromPieceName(myPieceName).first.y;
 	}
 }
 
@@ -88,7 +88,7 @@ extern "C"
 	_declspec(dllexport) int get_X2(CPuzzleSolveur * solver, char * imagette)
 	{
 		std::string myPieceName(imagette);
-		solver->getROIFromPieceName(myPieceName).second.x;
+		return solver->getROIFromPieceName(myPieceName).second.x;
 	}
 }
 
@@ -97,7 +97,7 @@ extern "C"
 	_declspec(dllexport) int get_Y2(CPuzzleSolveur * solver, char * imagette)
 	{
 		std::string myPieceName(imagette);
-		solver->getROIFromPieceName(myPieceName).second.y;
+		return solver->getROIFromPieceName(myPieceName).second.y;
 	}
 }
 
@@ -113,6 +113,14 @@ void main()
 	myPuzzleSolveur.pretraitementPiecesIndependantes(dirPiecesInde);
 	// Prétraitement du puzzle complet
 	myPuzzleSolveur.pretraitementPuzzleComplet(pathPuzzleComplet);
+	myPuzzleSolveur.recherchePositionPiecesDansPuzzle();
+
+	int numImg = 0;
+	while (true)
+	{
+		std::cin >> numImg;
+		myPuzzleSolveur.getROIFromPieceName("..\\Images\\pieces\\" + std::to_string(numImg) + ".bmp");
+	}
 
 	system("pause");
 }

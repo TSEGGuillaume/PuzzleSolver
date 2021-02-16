@@ -6,14 +6,10 @@
 
 #include "Tableau3D.h"
 #include "ImageClasse.h"
+#include "ImageGeneralTools.h"
 
 
 std::vector<std::string> listeDirToTableau(std::string dirDB);
-
-typedef struct STRUCT_POINT
-{
-	int x, y;
-} sPoint;
 
 class CPuzzleSolveur
 {
@@ -21,12 +17,13 @@ class CPuzzleSolveur
 
 	std::vector<std::string> m_vPiecesImageName;
 
-	CTableau3D<double> m_histoCouleurPuzzleComplet;
-	std::vector<CTableau3D<double>> m_histosCouleurPiecesInde;
+	const int m_cQuantificationHisto = 16;
+	S_HistoCouleur m_histoCouleurPuzzleComplet;
+	std::vector<S_HistoCouleur> m_histosCouleurPiecesInde;
 
 	std::vector<SIGNATURE_Forme> m_vPiecesHough;
 
-	std::map<std::string, std::pair<sPoint, sPoint>> m_assocPieceROI;
+	std::map<std::string, std::pair<SPoint2d, SPoint2d>> m_assocPieceROI;
 
 public:
 	CPuzzleSolveur() = default;
@@ -35,9 +32,9 @@ public:
 	void pretraitementPuzzleComplet(std::string & puzzleCompletPath);
 	void recherchePositionPiecesDansPuzzle(); // calcul proba + detect_max + choix du ROI en fonction de Hough
 
-	std::pair<sPoint, sPoint> getROIFromPieceName(std::string pieceName);
+	std::pair<SPoint2d, SPoint2d> getROIFromPieceName(std::string pieceName);
 
 private:
 	void segmentePieceIndependante(std::vector<std::string> & fileImage2Process);
-	std::pair<sPoint, sPoint> placePieceDansPuzzle(sPoint pointMaxProba);
+	std::pair<SPoint2d, SPoint2d> placePieceDansPuzzle(SPoint2d pointMaxProba);
 };

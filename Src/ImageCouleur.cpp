@@ -420,12 +420,18 @@ std::vector<unsigned long> CImageCouleur::histogramme(bool enregistrementCSV) {
 	return h;
 }
 
-CTableau3D<double> CImageCouleur::histogrammeCouleur(int nb_bin) const
+S_HistoCouleur CImageCouleur::histogrammeCouleur(int nb_bin) const
 {
 	int nb_pixel = m_iLargeur * m_iHauteur;
 	int size_bin = (255 / nb_bin) + 1;
 
+	S_HistoCouleur output;
+	output.bin = nb_bin;
+
+	// histo.at(red).at(green).at(blue)
 	CTableau3D<double> histoCouleur(nb_bin, nb_bin, nb_bin, 0);
+	std::vector<int> idx;
+
 	ST_COULEUR_RGB currRGB;
 
 	for (int i = 0; i < nb_pixel; i++)
@@ -434,7 +440,9 @@ CTableau3D<double> CImageCouleur::histogrammeCouleur(int nb_bin) const
 		currRGB.valueG = this->operator()(i)[1] / size_bin;
 		currRGB.valueB = this->operator()(i)[2] / size_bin;
 
-		histoCouleur.at(currRGB.valueR, currRGB.valueG, currRGB.valueB) += 1.0;
+		histoCouleur.at(currRGB.valueR, currRGB.valueG, currRGB.valueB) += 1;
+		int histo_idx = currRGB.valueR * nb_bin * nb_bin + currRGB.valueG * nb_bin + currRGB.valueB;
+		idx.push_back(histo_idx);
 	}
 
 	// Normalisation par le nombre de points total
@@ -445,12 +453,15 @@ CTableau3D<double> CImageCouleur::histogrammeCouleur(int nb_bin) const
 		{
 			for (int iBlue = 0; iBlue < nb_bin; iBlue++)
 			{
-				histoCouleur.at(iRed, iGreen, iBlue) /= nb_pixel;
+				//histoCouleur.at(iRed, iGreen, iBlue) /= nb_pixel;
 			}
 		}
 	}
 
-	return histoCouleur;
+	output.histogramme = histoCouleur;
+	output.idx_histogramme = idx;
+
+	return output;
 }
 
 // gestion des plans
